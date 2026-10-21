@@ -1,5 +1,10 @@
 # XR819 stability review — 2026-10-21
 
+Latest follow-up: [XR819-IRQ.md](XR819-IRQ.md) records the IRQ race investigation,
+firmware update and separate HT RX fix. The tested device now uses .52.58 firmware,
+#34 and IRQ diagnostics; #31, native SDIO and HT-disable are not deployed. The
+older A/B results and baseline disposition below are historical.
+
 The pinned driver, `3ce657ae533e2213f6fda2297da1598fa11d7a03`, is the latest
 merged commit in fifteenhex/xradio as checked through GitHub API. Armbian's
 current drivers_network.sh pins the same commit. Its last merged change adds

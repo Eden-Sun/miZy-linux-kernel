@@ -115,3 +115,14 @@ xradio_wlan, load the candidate with insmod, and run /opt/mainline-wifi. Remove
 the old DHCP pidfile so the reconnect callback acquires a lease on the recreated
 interface. Loading a candidate into RAM does not persist it; reboot loads the
 unchanged baseline from SPI. See XR819-STATUS.md for measured results.
+
+## Interrupt diagnostics and firmware
+
+See [XR819-IRQ.md](XR819-IRQ.md) for GPIO/native SDIO/HT/firmware comparisons,
+measured limits, and the selected firmware/HT RX/diagnostic build flags.
+`XRADIO_HT_RX_FIX=1` selects #34 separately from #31. Set
+`XRADIO_IRQ_DIAGNOSTICS=1` for IRQ-vs-watchdog race counters and correct warning
+classification; `XRADIO_IRQ_EXPERIMENT=1` additionally builds optional native SDIO
+and HT-disable module parameters. All remain off by default.
+`XRADIO_FIRMWARE_FILE` supplies the explicitly hash-checked .52.58 firmware to
+package-rootfs.sh; omitting it restores the original firmware on a reused root.

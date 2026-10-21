@@ -8,6 +8,17 @@ PATCH=$WORK/mainline-overlay
 BOOT=$WORK/bootstrap
 ROOT=$WORK/mizy-mainline-rootfs
 mkdir -p "$PATCH/opt" "$PATCH/etc" "$PATCH/lib/modules/$KREL" "$BOOT/bin" "$BOOT/lib" "$BOOT/dev" "$BOOT/proc" "$BOOT/sys"
+# Optional, pinned public firmware update. Never commit binary images or provisioned roots.
+if [ -n "${XRADIO_FIRMWARE_FILE:-}" ]; then
+    expected_fw=fb81436ad7cc0876614a2a9c2a54c5a93a75315aee164e3a3afe3db80842a9e1
+    [ "$(sha256sum "$XRADIO_FIRMWARE_FILE" | cut -d' ' -f1)" = "$expected_fw" ] || {
+        echo 'Unexpected XR819 firmware SHA-256' >&2; exit 1;
+    }
+    mkdir -p "$PATCH/lib/firmware/xr819"
+    cp "$XRADIO_FIRMWARE_FILE" "$PATCH/lib/firmware/xr819/fw_xr819.bin"
+else
+    rm -f "$PATCH/lib/firmware/xr819/fw_xr819.bin"
+fi
 cp "$HERE/rootfs/mainline-wifi" "$HERE/rootfs/mainline-prepare" "$PATCH/opt/"
 cp "$HERE/rootfs/preinit.mizy" "$PATCH/etc/"
 find "$WORK/modules/lib/modules/$KREL" -name '*.ko' -exec cp '{}' "$PATCH/lib/modules/$KREL/" \;
