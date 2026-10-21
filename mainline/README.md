@@ -74,3 +74,11 @@ before using it.
 Do not write SPI until the RAM test has verified boot, Wi-Fi, DHCP, DNS, proxy
 requests and the reverse SSH tunnel. Keep the original bootloader and a verified
 full SPI backup available for recovery.
+
+## Assemble a private SPI candidate
+
+After the build, `assemble-spi.py BACKUP ARTIFACTS` creates a resized-layout DTB,
+boot script, full candidate and payload files sized for the original MTD slots.
+It checks that U-Boot and the saved user partition remain byte-identical to the
+backup. The full candidate contains the backup's private configuration and must
+remain outside git. Assembly alone is **not** evidence of hardware compatibility.
