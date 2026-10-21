@@ -12,10 +12,10 @@ mount -t tmpfs tmp-overlay /mnt/store
 mkdir -p /mnt/store/upper /mnt/store/work
 # Import the saved upper layer before mounting OverlayFS. Modifying a live
 # upper directory behind OverlayFS (the legacy loader) causes stale dentries.
-mkdir -p /user
-mount -t jffs2 -o ro /dev/mtdblock5 /user || exec sh
-cp -a /user/overlay/. /mnt/store/upper/ || exec sh
-/bin/busybox umount /user || exec sh
+mkdir -p /mnt/user
+mount -t jffs2 -o ro /dev/mtdblock5 /mnt/user || exec sh
+cp -a /mnt/user/overlay/. /mnt/store/upper/ || exec sh
+/bin/busybox umount /mnt/user || exec sh
 mount -t overlay overlay -o lowerdir=/mnt/rom,upperdir=/mnt/store/upper,workdir=/mnt/store/work /mnt/root || exec /bin/sh
 mkdir -p /mnt/root/rom /mnt/root/overlay /mnt/root/mnt/store
 mount -o bind /mnt/store/upper /mnt/root/overlay
