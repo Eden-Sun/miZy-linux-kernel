@@ -1,0 +1,4 @@
+#!/bin/sh
+. /opt/preinit
+/opt/mainline-prepare
+exit 0

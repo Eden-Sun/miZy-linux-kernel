@@ -1,0 +1,23 @@
+#!/bin/sh
+# RAM-only bring-up: read the original miZy squashfs behind its 64-byte uInitrd header.
+export PATH=/bin
+export MIZY=1 INITRAMFS=1
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+for n in 1 2 3 4 5 6 7 8 9 10; do
+    [ -b /dev/mtdblock4 ] && break
+    sleep 1
+done
+mkdir -p /rom /store /newroot
+mount -t squashfs -o ro,loop,offset=64 /dev/mtdblock4 /rom || exec sh
+mount -t tmpfs tmp-overlay /store
+mkdir -p /store/upper /store/work /store/lower
+cp -a /mizy-overlay/. /store/lower/
+mount -t overlay overlay -o lowerdir=/store/lower:/rom,upperdir=/store/upper,workdir=/store/work /newroot || exec sh
+mkdir -p /newroot/rom /newroot/overlay /newroot/mnt/store
+mount -o bind /store/upper /newroot/overlay
+mount -o move /rom /newroot/rom
+mount -o move /store /newroot/mnt/store
+for fs in proc sys dev; do mount -o move /$fs /newroot/$fs; done
+exec switch_root /newroot /sbin/init.openwrt
