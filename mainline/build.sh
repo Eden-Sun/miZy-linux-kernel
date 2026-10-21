@@ -25,7 +25,8 @@ XRADIO_FIXES=${XRADIO_FIXES:-0}
 XRADIO_IRQ_EXPERIMENT=${XRADIO_IRQ_EXPERIMENT:-0}
 XRADIO_HT_RX_FIX=${XRADIO_HT_RX_FIX:-$XRADIO_FIXES}
 XRADIO_IRQ_DIAGNOSTICS=${XRADIO_IRQ_DIAGNOSTICS:-$XRADIO_IRQ_EXPERIMENT}
-for value in "$XRADIO_FIXES" "$XRADIO_IRQ_EXPERIMENT" "$XRADIO_HT_RX_FIX" "$XRADIO_IRQ_DIAGNOSTICS"; do
+XRADIO_LOAD_DIAGNOSTICS=${XRADIO_LOAD_DIAGNOSTICS:-0}
+for value in "$XRADIO_FIXES" "$XRADIO_IRQ_EXPERIMENT" "$XRADIO_HT_RX_FIX" "$XRADIO_IRQ_DIAGNOSTICS" "$XRADIO_LOAD_DIAGNOSTICS"; do
     case "$value" in 0|1) ;; *) echo 'XRADIO experiment flags must be 0 or 1' >&2; exit 1;; esac
 done
 set_driver_patch() {
@@ -44,6 +45,7 @@ set_driver_patch 0034-xradio-ht-rx-encoding.patch "$XRADIO_HT_RX_FIX"
 set_driver_patch 0040-xradio-irq-diagnostics.patch "$XRADIO_IRQ_DIAGNOSTICS"
 set_driver_patch 0041-xradio-native-sdio-irq.patch "$XRADIO_IRQ_EXPERIMENT"
 set_driver_patch 0042-xradio-optional-disable-ht.patch "$XRADIO_IRQ_EXPERIMENT"
+set_driver_patch 0043-xradio-load-diagnostics.patch "$XRADIO_LOAD_DIAGNOSTICS"
 make -C "$SRC" O="$OUT" sunxi_defconfig
 CFG="$SRC/scripts/config --file $OUT/.config"
 for name in DRM FB MEDIA_SUPPORT SOUND SND CAN ATA IIO RC_CORE STAGING INPUT_TOUCHSCREEN INPUT_MISC SERIO PERF_EVENTS DEBUG_INFO CORESIGHT HW_RANDOM MTD_SPI_NOR_USE_4K_SECTORS; do

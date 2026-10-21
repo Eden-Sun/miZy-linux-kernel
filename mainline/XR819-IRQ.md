@@ -61,6 +61,11 @@ not prove that firmware caused all observed differences or that losses are fixed
 
 ## Load limits
 
+Follow-up isolated load tests and the opt-in queue/firmware timing instrumentation
+are recorded in [XR819-LOAD.md](XR819-LOAD.md). Saturation reproduced TLS timeouts
+without any watchdog recovery, so an IRQ-only explanation is insufficient.
+
+
 A subsequent run added two 4 MiB SSH transfers in each direction (16 MiB total),
 HTTPS relay requests and a concurrent 16 MiB SPI backup. All transfer hashes
 matched, the driver stayed up, and no firmware exception/read error occurred.
