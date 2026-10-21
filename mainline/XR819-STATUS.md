@@ -7,7 +7,10 @@ management frame protection capability (PR #29, 2026-09-01).
 
 The tested H2+ remains connected after 37 minutes, but its kernel log repeatedly
 reports `xradio_wlan ... missed interrupt`. Successful boot and HTTPS requests
-are functional smoke tests, not evidence of long-term reliability.
+are functional smoke tests, not evidence of long-term reliability. A subsequent
+20-packet LAN gateway sample had 0% loss, 8.445 ms mean RTT, while the current
+kernel log contained 67 missed-interrupt messages. This short sample does not
+establish sustained throughput or reliability.
 
 ## Unmerged candidates
 
