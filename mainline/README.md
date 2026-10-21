@@ -1,6 +1,7 @@
 # Orange Pi Zero H2+ mainline bring-up
 
-This is a **test candidate**, not a completed device upgrade. It keeps miZy's
+This build has been installed on the H2+ device and passed automatic SPI reboot,
+XR819 Wi-Fi, DHCP, DNS and HTTPS proxy tests. It keeps miZy's
 userspace rather than installing Armbian. See the parent project's status record
 for actual hardware test results.
 
@@ -95,4 +96,7 @@ provisions the saved MAC before interface registration and removes the ethernet1
 alias so old U-Boot cannot overwrite it. A legacy squashfs initrd uses chroot for
 its init handoff; only the cpio RAM bootstrap uses switch_root.
 
-These RAM results do not by themselves establish successful permanent SPI boot.
+The final SPI image also passed unattended software reboot and the same network
+and HTTPS relay checks. The boot script must set initrd_high=0xffffffff, and the
+legacy root init must use /mnt/user (the squashfs root is read-only). A separate
+physical power-cycle test after the final fixes has not been recorded.
