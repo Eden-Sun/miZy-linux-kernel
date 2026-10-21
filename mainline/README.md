@@ -35,9 +35,7 @@ before extracting it. Then run:
 ```sh
 unsquashfs -d /work/mizy-rootfs /workspace/build/downloads/mizy-original-rootfs.bin
 bash /workspace/kernel/mainline/package-rootfs.sh
-cd /workspace/build/artifacts
-cp /workspace/kernel/mainline/ram-test.its .
-mkimage -f ram-test.its mizy-6.12.113-ram-test.itb
+python3 /workspace/kernel/mainline/pack-ram.py /workspace/build/artifacts
 ```
 
 These build commands do not flash the device. Outputs and local backups belong
@@ -61,10 +59,13 @@ permanent resized-layout DTB.
 
 ## RAM test
 
-`ram-test.its` combines the kernel, an initramfs bootstrap and the original-layout
-DTB. The bootstrap reads the original squashfs from SPI without modifying it,
-adds mainline files as a separate lower layer, and imports the saved miZy overlay
-through miZy's preinit. Its serial console device nodes are explicitly included.
+`pack-ram.py` combines legacy uImage, uInitrd and DTB at aligned addresses,
+recorded in `ram-legacy.json`. The installed U-Boot does not support FIT images.
+The bootstrap reads the original squashfs and saved user JFFS2 partition without
+modifying SPI. It imports saved settings before mounting OverlayFS, with mainline
+files as a separate lower layer. JFFS2 needs LZO compression and 64 KiB SPI erase
+blocks to read the existing filesystem. The bootstrap includes its dynamic loader,
+libgcc and serial device nodes.
 
 `ymodem-upload.py IMAGE` uploads to U-Boot at RAM address `0x48000000` and runs
 `iminfo`. It does not boot or flash the image. It currently targets the macOS
@@ -77,8 +78,21 @@ full SPI backup available for recovery.
 
 ## Assemble a private SPI candidate
 
-After the build, `assemble-spi.py BACKUP ARTIFACTS` creates a resized-layout DTB,
+After the build, `assemble-spi.py BACKUP ARTIFACTS --wifi-mac DEVICE_MAC` creates a resized-layout DTB,
 boot script, full candidate and payload files sized for the original MTD slots.
 It checks that U-Boot and the saved user partition remain byte-identical to the
 backup. The full candidate contains the backup's private configuration and must
 remain outside git. Assembly alone is **not** evidence of hardware compatibility.
+
+## Hardware results (2026-10-21)
+
+Linux 6.12.113 booted on all four H2+ cores, entered miZy procd, read the original
+saved JFFS2 overlay, and connected XR819 to WPA2 Wi-Fi with DHCP and DNS. An HTTPS
+request through the reverse SSH relay returned CONNECT 200 and HTTPS 200.
+Disable the old Wi-Fi hotplug restart hook and explicitly load the crypto modules:
+the legacy modprobe does not resolve their algorithm aliases. The permanent DTB
+provisions the saved MAC before interface registration and removes the ethernet1
+alias so old U-Boot cannot overwrite it. A legacy squashfs initrd uses chroot for
+its init handoff; only the cpio RAM bootstrap uses switch_root.
+
+These RAM results do not by themselves establish successful permanent SPI boot.

@@ -15,7 +15,7 @@ chmod 755 "$PATCH/opt/"* "$PATCH/etc/preinit.mizy"
 [ -c "$BOOT/dev/console" ] || mknod -m 600 "$BOOT/dev/console" c 5 1
 [ -c "$BOOT/dev/null" ] || mknod -m 666 "$BOOT/dev/null" c 1 3
 cp "$WORK/mizy-rootfs/bin/busybox" "$BOOT/bin/"
-cp "$WORK/mizy-rootfs/lib/libc.so" "$BOOT/lib/"
+cp "$WORK/mizy-rootfs/lib/libc.so" "$WORK/mizy-rootfs/lib/libgcc_s.so.1" "$BOOT/lib/"
 ln -sf libc.so "$BOOT/lib/ld-musl-armhf.so.1"
 for cmd in sh mount mkdir cp sleep switch_root; do ln -sf busybox "$BOOT/bin/$cmd"; done
 cp "$HERE/bootstrap-init" "$BOOT/init"

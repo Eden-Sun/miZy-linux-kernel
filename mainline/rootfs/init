@@ -10,10 +10,18 @@ mkdir -p /mnt/rom /mnt/store /mnt/root
 mount -t squashfs -o ro /dev/ram0 /mnt/rom || exec /bin/sh
 mount -t tmpfs tmp-overlay /mnt/store
 mkdir -p /mnt/store/upper /mnt/store/work
+# Import the saved upper layer before mounting OverlayFS. Modifying a live
+# upper directory behind OverlayFS (the legacy loader) causes stale dentries.
+mkdir -p /user
+mount -t jffs2 -o ro /dev/mtdblock5 /user || exec sh
+cp -a /user/overlay/. /mnt/store/upper/ || exec sh
+/bin/busybox umount /user || exec sh
 mount -t overlay overlay -o lowerdir=/mnt/rom,upperdir=/mnt/store/upper,workdir=/mnt/store/work /mnt/root || exec /bin/sh
 mkdir -p /mnt/root/rom /mnt/root/overlay /mnt/root/mnt/store
 mount -o bind /mnt/store/upper /mnt/root/overlay
 mount -o move /mnt/rom /mnt/root/rom
 mount -o move /mnt/store /mnt/root/mnt/store
 for fs in proc sys dev; do mount -o move /$fs /mnt/root/$fs; done
-exec switch_root /mnt/root /sbin/init.openwrt
+# A legacy squashfs initrd is a block root, not a ramfs initramfs.
+# BusyBox switch_root rejects it; retain miZy's chroot handoff.
+exec chroot /mnt/root /sbin/init.openwrt

@@ -31,7 +31,8 @@ def acknowledged(packet):
  raise RuntimeError('Too many retries')
 try:
  baud(115200);time.sleep(.3);termios.tcflush(fd,termios.TCIFLUSH);write(b'\r');print(read(1).decode(errors='replace'),flush=True)
- write(b'loady 0x48000000\r');expect([67],15)
+ address=int(sys.argv[2],0) if len(sys.argv)>2 else 0x48000000
+ write(f'loady {address:#x}\r'.encode());expect([67],15)
  data=pathlib.Path(sys.argv[1]).read_bytes()
  head=(b'mizy-test.itb\0'+str(len(data)).encode()+b'\0').ljust(128,b'\0')
  acknowledged(pkt(0,head));expect([67],15)
@@ -46,5 +47,6 @@ try:
  elif c!=6:raise RuntimeError('EOT cancelled')
  expect([67],15);acknowledged(pkt(0,b'\0'*128))
  print('UPLOAD_COMPLETE\n'+read(2).decode(errors='replace'),flush=True)
- write(b'iminfo 0x48000000\r');print(read(3).decode(errors='replace'),flush=True)
+ if len(sys.argv)<4 or sys.argv[3]!='raw':
+  write(f'iminfo {address:#x}\r'.encode());print(read(3).decode(errors='replace'),flush=True)
 finally:os.close(fd)

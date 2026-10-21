@@ -11,6 +11,7 @@ import subprocess
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('backup', type=Path, help='Verified 16 MiB current SPI backup (private)')
 p.add_argument('artifacts', type=Path)
+p.add_argument('--wifi-mac', required=True, help='Saved device Wi-Fi MAC, provisioned only in local DTB')
 a = p.parse_args()
 os.umask(0o077)
 out = a.artifacts
@@ -26,6 +27,13 @@ for data in (kernel, root):
 # Keep partition order and the user's original 0xe80000 address unchanged.
 board = out / 'board-4m.dtb'
 board.write_bytes((out / 'board.dtb').read_bytes())
+mac = bytes.fromhex(a.wifi_mac.replace(':', ''))
+assert len(mac) == 6 and not mac[0] & 1 and any(mac), 'Invalid Wi-Fi MAC'
+subprocess.run(['fdtput', '-t', 'bx', str(board), '/soc/mmc@1c10000/wifi@1',
+                'local-mac-address', *[f'{b:02x}' for b in mac]], check=True)
+# Prevent old U-Boot from replacing the provisioned MAC with eth1addr.
+subprocess.run(['fdtput', '-d', str(board), '/aliases', 'ethernet1'], check=True)
+
 base = '/soc/spi@1c68000/flash@0/partitions'
 subprocess.run(['fdtput', '-t', 'x', str(board), base + '/partition@a0000', 'reg', 'a0000', '400000'], check=True)
 subprocess.run(['fdtput', '-t', 'x', str(board), base + '/partition@3a0000', 'reg', '4a0000', '9e0000'], check=True)
