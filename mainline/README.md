@@ -100,3 +100,18 @@ The final SPI image also passed unattended software reboot and the same network
 and HTTPS relay checks. The boot script must set initrd_high=0xffffffff, and the
 legacy root init must use /mnt/user (the squashfs root is read-only). A separate
 physical power-cycle test after the final fixes has not been recorded.
+
+## Experimental XR819 fixes
+
+The default remains the pinned upstream driver. To build the two individually
+reviewed, unmerged fixes (#31 data-cipher preservation and #34 HT RX metadata),
+run `XRADIO_FIXES=1 bash /workspace/kernel/mainline/build.sh`. Setting
+`XRADIO_FIXES=0` restores the baseline source state, including when reusing the
+same build directory. Patch headers retain upstream author and commit IDs.
+
+For live testing, transfer the matching xradio_wlan.ko to /tmp, keep a baseline
+module and UART shell, stop wpa_supplicant/wpa_cli and the wlan0 udhcpc PID, unload
+xradio_wlan, load the candidate with insmod, and run /opt/mainline-wifi. Remove
+the old DHCP pidfile so the reconnect callback acquires a lease on the recreated
+interface. Loading a candidate into RAM does not persist it; reboot loads the
+unchanged baseline from SPI. See XR819-STATUS.md for measured results.

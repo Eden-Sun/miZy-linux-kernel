@@ -20,6 +20,20 @@ if [ ! -f "$SRC/.mizy-patched" ]; then
     cat "$HERE/board-spi.dtsi" >> "$SRC/arch/arm/boot/dts/allwinner/sun8i-h2-plus-orangepi-zero.dts"
     touch "$SRC/.mizy-patched"
 fi
+# Experimental upstream fixes remain opt-in until longer hardware testing.
+XRADIO_FIXES=${XRADIO_FIXES:-0}
+case "$XRADIO_FIXES" in 0|1) ;; *) echo 'XRADIO_FIXES must be 0 or 1' >&2; exit 1;; esac
+for fix in 0031-xradio-preserve-data-cipher.patch 0034-xradio-ht-rx-encoding.patch; do
+    driver_dir="$SRC/drivers/net/wireless/xradio"
+    if patch --dry-run -s -d "$driver_dir" -p1 -N < "$HERE/patches/$fix" >/dev/null 2>&1; then
+        [ "$XRADIO_FIXES" = 0 ] || patch -s -d "$driver_dir" -p1 < "$HERE/patches/$fix"
+    elif patch --dry-run -s -d "$driver_dir" -p1 -R < "$HERE/patches/$fix" >/dev/null 2>&1; then
+        [ "$XRADIO_FIXES" = 1 ] || patch -s -d "$driver_dir" -p1 -R < "$HERE/patches/$fix"
+    else
+        echo "Cannot identify driver patch state: $fix" >&2
+        exit 1
+    fi
+done
 make -C "$SRC" O="$OUT" sunxi_defconfig
 CFG="$SRC/scripts/config --file $OUT/.config"
 for name in DRM FB MEDIA_SUPPORT SOUND SND CAN ATA IIO RC_CORE STAGING INPUT_TOUCHSCREEN INPUT_MISC SERIO PERF_EVENTS DEBUG_INFO CORESIGHT HW_RANDOM MTD_SPI_NOR_USE_4K_SECTORS; do
