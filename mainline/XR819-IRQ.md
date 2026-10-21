@@ -9,8 +9,9 @@ Instrumentation snapshots an atomic IRQ count and the pending BH wake flag befor
 and after the watchdog's SDIO read. It keeps separate counters for recoveries,
 IRQs racing the read, recoveries with no observed IRQ, and read errors. The latter
 are observations within that window, not logic-analyzer proof of an electrical
-failure. The diagnostic patch no longer calls a recovery a missed interrupt when
-an IRQ or pending wake was observed during the check; all recoveries remain
+failure. The pending BH wake flag also represents TX work and is not sufficient
+evidence of an IRQ; the final classifier uses the IRQ counter delta alone. The diagnostic patch no longer calls a recovery a missed interrupt only when
+the IRQ counter actually changed during the check; all recoveries remain
 counted and the no-IRQ case still produces a warning. Recovery scheduling and
 the 33 ms watchdog are unchanged.
 
@@ -21,7 +22,7 @@ board to the gateway and from the workstation to the board, followed by a short
 idle period. These are sequential samples in an uncontrolled RF environment,
 not randomized trials or a long-duration reliability qualification.
 
-| Firmware / configuration | Gateway received | Board received | Recoveries without observed IRQ | IRQ races |
+| Firmware / configuration | Gateway received | Board received | Recoveries without observed IRQ | Provisional IRQ/wake races |
 |---|---:|---:|---:|---:|
 | .52.28 / GPIO / HT | 285/300 | 284/300 | 2 | 0 |
 | .52.28 / native SDIO / HT | 290/300 | 282/300 | 0 | 0 |
@@ -29,6 +30,11 @@ not randomized trials or a long-duration reliability qualification.
 | .52.58 / GPIO / HT | 293/300 | 295/300 | 0 | 1 |
 | .52.58 / native SDIO / HT | 288/300 | 296/300 | 1 | 0 |
 | .52.58 / GPIO / HT / upstream RX fix #34 | 296/300 | 298/300 | 1 | 0 |
+
+The table was collected with the initial diagnostic predicate, which classified
+either an IRQ delta or a pending wake as a race. The final deployed predicate
+requires an actual IRQ counter delta; TX-only wakes are not suppressed. The
+.52.58/GPIO race was directly observed as IRQ count 1380 to 1381 during the read.
 
 Switching transport or disabling HT did not eliminate losses. Native SDIO initially
 showed no recoveries, but subsequent runs still did, so it is not a cure. No SDIO
@@ -59,7 +65,7 @@ A subsequent run added two 4 MiB SSH transfers in each direction (16 MiB total),
 HTTPS relay requests and a concurrent 16 MiB SPI backup. All transfer hashes
 matched, the driver stayed up, and no firmware exception/read error occurred.
 Gateway ping was 578/600; inbound was 571/600. The watchdog counted 1 recovery
-without observed IRQ and 2 IRQ races. Fifteen HTTPS requests succeeded, then one
+without observed IRQ and 2 provisional IRQ/pending-wake race classifications. Fifteen HTTPS requests succeeded, then one
 TLS handshake exceeded its 5 second deadline. This additional SPI/SSH load is not
 a matched comparison to the quiet rows. After the backup ended, a separate
 20-request HTTPS retest completed 20/20 CONNECT 200 / HTTPS 200.
@@ -101,3 +107,12 @@ to the pinned upstream version and then back to the selected configuration.
 The native SDIO and HT-disable paths are retained strictly as optional diagnostic
 experiments, not as the installed fix. The firmware binary is not distributed
 in the repository.
+
+Inside the prepared container, the optional firmware can be supplied explicitly:
+
+```sh
+curl -fL https://raw.githubusercontent.com/armbian/firmware/aff348fa9eef0fcc97d4f2bb7304f0862baffc20/xr819/fw_xr819.bin \
+  -o /workspace/build/downloads/xr819-fw-52.58.bin
+XRADIO_FIRMWARE_FILE=/workspace/build/downloads/xr819-fw-52.58.bin \
+  bash /workspace/kernel/mainline/package-rootfs.sh
+```

@@ -55,7 +55,7 @@
 +				atomic_inc(&diag_poll_errors);
 +			if (available > 0) {
 +				atomic_inc(&diag_recoveries);
-+				if (irq_after != irq_before || pending_before || pending_after) {
++				if (irq_after != irq_before) {
 +					/* An IRQ raced with the watchdog's SDIO read. */
 +					atomic_inc(&diag_late_irq);
 +					dev_dbg(hw_priv->pdev, "RX became ready during watchdog probe; IRQ observed\n");
