@@ -46,6 +46,8 @@ assert board.stat().st_size <= 0x10000
 cmd = out / 'boot-mainline.cmd'
 cmd.write_text(f'''echo miZy Linux 6.12.113 mainline boot
 setenv bootm_boot_mode nonsec
+# Keep the 7 MiB legacy initrd at its safe load address, above the kernel.
+setenv initrd_high 0xffffffff
 setenv bootargs 'itype=openwrt root=/dev/ram0 rootfstype=squashfs rw ramdisk_size=16384 ip=off console=ttyS0,115200 earlycon=uart8250,mmio32,0x01c28000 loglevel=5 panic=10 bootfrom=spi loadfrom=spi'
 spiread.hd 0x43000000 90000 {board.stat().st_size}
 spiread.hd 0x42000000 a0000 {len(kernel)}
