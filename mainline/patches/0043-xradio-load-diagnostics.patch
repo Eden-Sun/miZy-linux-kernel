@@ -67,7 +67,7 @@
  #include <linux/etherdevice.h>
  #include <linux/skbuff.h>
  
-@@ -36,6 +37,33 @@
+@@ -36,6 +37,39 @@
  #endif
  
  //for test yangfh
@@ -97,15 +97,41 @@
 +LOAD_DIAG(diag_fw_media_max_us);
 +LOAD_DIAG(diag_tx_confirm_count);
 +LOAD_DIAG(diag_tx_confirm_failed);
++LOAD_DIAG(diag_tx_retry_exceeded);
++LOAD_DIAG(diag_tx_lifetime_exceeded);
++LOAD_DIAG(diag_tx_link_lost);
++LOAD_DIAG(diag_tx_other_failed);
++LOAD_DIAG(diag_tx_requeues);
++LOAD_DIAG(diag_tx_ack_failures);
 +
  extern u32 tx_retrylimit;
  extern u32 tx_over_limit;
  extern u32 tx_lower_limit;
-@@ -1040,6 +1068,12 @@
+@@ -1040,6 +1074,32 @@
  	const struct xradio_txpriv *txpriv;
  	struct xradio_vif *priv;
  
 +	atomic_inc(&diag_tx_confirm_count);
++	atomic_add(arg->ackFailures, &diag_tx_ack_failures);
++	switch (arg->status) {
++	case WSM_STATUS_SUCCESS:
++		break;
++	case WSM_REQUEUE:
++		atomic_inc(&diag_tx_requeues);
++		break;
++	case WSM_STATUS_RETRY_EXCEEDED:
++		atomic_inc(&diag_tx_retry_exceeded);
++		break;
++	case WSM_STATUS_TX_LIFETIME_EXCEEDED:
++		atomic_inc(&diag_tx_lifetime_exceeded);
++		break;
++	case WSM_STATUS_LINK_LOST:
++		atomic_inc(&diag_tx_link_lost);
++		break;
++	default:
++		atomic_inc(&diag_tx_other_failed);
++		break;
++	}
 +	if (arg->status && arg->status != WSM_REQUEUE)
 +		atomic_inc(&diag_tx_confirm_failed);
 +	load_diag_max(&diag_fw_queue_max_us, arg->txQueueDelay);

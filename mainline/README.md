@@ -126,3 +126,15 @@ classification; `XRADIO_IRQ_EXPERIMENT=1` additionally builds optional native SD
 and HT-disable module parameters. All remain off by default.
 `XRADIO_FIRMWARE_FILE` supplies the explicitly hash-checked .52.58 firmware to
 package-rootfs.sh; omitting it restores the original firmware on a reused root.
+
+## Saturation diagnostics and retry-budget experiment
+
+`XRADIO_LOAD_DIAGNOSTICS=1` adds read-only host-queue and firmware TX timing,
+expiry, retry-exhaustion, and other confirmation-status counters. It is
+independent of IRQ diagnostics and defaults off.
+
+`XRADIO_RETRY_EXPERIMENT=1` raises the firmware short/long retry ceilings from
+the default 7-attempt configuration to 15 attempts. It preserves rate selection
+and the rate-policy termination flag: packets may stop earlier when their policy
+is exhausted. It defaults off and is an experiment, with a possible latency and
+airtime tradeoff. See XR819-LOAD.md for the hardware comparison and limitations.

@@ -1,5 +1,9 @@
 # XR819 saturation and TLS investigation (2026-10-21)
 
+The 2026-10-22 hardware follow-up, failure-status diagnosis, and retry-ceiling
+experiment are in [XR819-RETRY.md](XR819-RETRY.md). The operator confirmed that
+the access loss described below was an intentional power-off.
+
 ## What was isolated
 
 The board retained Linux 6.12.113, firmware .52.58, HT RX correction #34 and
