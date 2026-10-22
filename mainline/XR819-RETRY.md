@@ -136,3 +136,54 @@ occur outside the quoted load windows, and two sunxi-mmc data errors were logged
 earlier in the session. Neither is claimed solved. Further work should isolate
 reverse SSH/CONNECT latency and repeat longer tests under controlled RF/load
 conditions before describing this as a general XR819 fix.
+
+## Ten-minute follow-up on the installed variant
+
+A subsequent test used the same installed module, with no configuration changes,
+flashing, driver reload, or reboot. It offered 600 seconds of simultaneous
+bidirectional HTTP and repeated read-only SPI access, with 2,995 pings per path
+and 80 HTTPS requests per route. HTTPS requests were scheduled six seconds apart;
+all started during load, with the last start at about 474 s. The final roughly
+two minutes therefore continued bulk load and pings without new HTTPS requests.
+The local test endpoint used a self-signed certificate with verification disabled
+only for that endpoint; public HTTPS certificate verification remained enabled.
+Periodic diagnostic SSH probes also contributed a small amount of traffic.
+
+| Measurement | Result |
+|---|---:|
+| Workstation → board ping | 2,894/2,995; 3.37% loss |
+| Board → gateway ping | 2,897/2,995; 3.27% loss |
+| Workstation → gateway control | 2,995/2,995 |
+| Local proxy HTTPS | 80/80 |
+| Reverse proxy HTTPS | 68/80; 10 TLS deadlines, 2 CONNECT deadlines |
+| Direct public HTTPS control | 79/80; one connection reset by peer |
+| Failed firmware TX confirmations | 1,074/150,701; 0.71%, all retry exhaustion |
+| Host TTL / firmware lifetime / link-loss confirmations | 0 / 0 / 0 |
+| Maximum host queue age | 850 ms |
+| Maximum firmware pre-transmission / completion delay | 841,314 / 861,740 us |
+| Maximum observed temperature | 50.004 C |
+
+Successful reverse HTTPS requests had a median TLS completion time of 3.052 s;
+failed requests are excluded from that median. Local HTTPS had a median TLS time
+of 1.277 s. CPU averages ranged from 17.5% to 28.6% busy, with the busiest sampled
+core interval at 56.3%. No sampled CPU saturation was observed, which does not
+exclude shorter scheduling delays.
+
+The observation window contained one sunxi-mmc `data error, sending stop command`
+and one watchdog recovery without an observed IRQ. Poll-read-error counters were
+zero, with no observed firmware exception or reassociation/reboot. Bulk HTTP
+requests also encountered their separate 10-second deadline. Firmware TX failure
+fraction and end-to-end ping loss are different measurements and must not be
+substituted for each other.
+
+After load stopped, a 1 MiB random payload round trip matched byte count and
+SHA-256, followed by 20/20 CONNECT 200 / HTTPS 200 requests without bulk load.
+The temporary LAN test proxy and workstation endpoint were stopped. The installed
+module hash remained unchanged, and the production proxy stayed running.
+
+This longer sample was worse than the preceding 200-second sample. It confirms
+that the current variant is still unsuitable for a claim of stable, deadline-safe
+operation under saturation. The lower retry-exhaustion fractions observed in the
+alternating tests remain recorded, but do not establish a general stability fix.
+The 79/80 direct control also shows that not every observed HTTPS error is unique
+to the board path. No new changes were deployed as a result of this test.
